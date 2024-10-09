@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TESTING SAJA</title>
+    <link rel="stylesheet" href="style.css">
+<style type="text/css" id="dcoder_stylesheet">body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+    background-color: #f0f0f0;
+}
+
+h1 {
+    font-family: Arial, sans-serif;
+    margin-bottom: 20px;
+}
+
+#gameCanvas {
+    border: 2px solid #000;
+    background-color: #fff;
+    width: 400px;
+    height: 400px;
+}
+
+#joystick {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    background-color: #ddd;
+    border-radius: 50%;
+    margin-top: 20px;
+    touch-action: none;
+}
+
+#joystick-handle {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    background-color: #888;
+    border-radius: 50%;
+    left: 30px;
+    top: 30px;
+    transition: 0.1s;
+}
+</style></head>
+<body>
+    <h1>TESTING SAJA</h1>
+    <canvas id="gameCanvas"></canvas>
+    <div id="joystick">
+        <div id="joystick-handle"></div>
+    </div>
+    <script src="script.js"></script>
+
+<script type="text/javascript" id="dcoder_script">const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+canvas.width = 400;
+canvas.height = 400;
+
+let ball = {
+    x: canvas.width / 2,
+    y: canvas.height / 2,
+    radius: 10,
+    speed: 2,
+    dx: 0,
+    dy: 0
+};
+
+const joystick = document.getElementById('joystick');
+const joystickHandle = document.getElementById('joystick-handle');
+let joystickCenter = { x: 50, y: 50 };
+let isDragging = false;
+
+function drawBall() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+    ctx.fillStyle = 'blue';
+    ctx.fill();
+    ctx.closePath();
+}
+
+function updateBall() {
+    ball.x += ball.dx;
+    ball.y += ball.dy;
+
+    // Cegah bola keluar dari canvas
+    if (ball.x < ball.radius) ball.x = ball.radius;
+    if (ball.y < ball.radius) ball.y = ball.radius;
+    if (ball.x > canvas.width - ball.radius) ball.x = canvas.width - ball.radius;
+    if (ball.y > canvas.height - ball.radius) ball.y = canvas.height - ball.radius;
+}
+
+function handleJoystickMove(x, y) {
+    const rect = joystick.getBoundingClientRect();
+    const joystickX = x - rect.left;
+    const joystickY = y - rect.top;
+    const deltaX = joystickX - joystickCenter.x;
+    const deltaY = joystickY - joystickCenter.y;
+    const distance = Math.sqrt(deltaX ** 2 + deltaY ** 2);
+    const maxDistance = 40;
+
+    if (distance < maxDistance) {
+        joystickHandle.style.left = `${joystickX - 20}px`;
+        joystickHandle.style.top = `${joystickY - 20}px`;
+    } else {
+        const angle = Math.atan2(deltaY, deltaX);
+        joystickHandle.style.left = `${Math.cos(angle) * maxDistance + joystickCenter.x - 20}px`;
+        joystickHandle.style.top = `${Math.sin(angle) * maxDistance + joystickCenter.y - 20}px`;
+    }
+
+    // Update kecepatan bola berdasarkan posisi analog
+    ball.dx = ((joystickHandle.offsetLeft + 20) - joystickCenter.x) / 10;
+    ball.dy = ((joystickHandle.offsetTop + 20) - joystickCenter.y) / 10;
+}
+
+joystick.addEventListener('mousedown', () => {
+    isDragging = true;
+});
+
+joystick.addEventListener('touchstart', (event) => {
+    isDragging = true;
+    handleJoystickMove(event.touches[0].clientX, event.touches[0].clientY);
+});
+
+window.addEventListener('mousemove', (event) => {
+    if (isDragging) {
+        handleJoystickMove(event.clientX, event.clientY);
+    }
+});
+
+window.addEventListener('touchmove', (event) => {
+    if (isDragging) {
+        handleJoystickMove(event.touches[0].clientX, event.touches[0].clientY);
+    }
+});
+
+window.addEventListener('mouseup', () => {
+    isDragging = false;
+    resetJoystick();
+});
+
+window.addEventListener('touchend', () => {
+    isDragging = false;
+    resetJoystick();
+});
+
+function resetJoystick() {
+    joystickHandle.style.left = '30px';
+    joystickHandle.style.top = '30px';
+    ball.dx = 0;
+    ball.dy = 0;
+}
+
+function gameLoop() {
+    updateBall();
+    drawBall();
+    requestAnimationFrame(gameLoop);
+}
+
+gameLoop();
+</script></body></html>
